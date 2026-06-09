@@ -33,6 +33,7 @@ export const SETTINGS_REPLICA_ID = 'singleton';
 export const SETTINGS_WHITELIST = [
   'globalViewSettings.userStylesheet',
   'globalViewSettings.userUIStylesheet',
+  'globalViewSettings.typographyEnhancement',
   'globalReadSettings.customThemes',
   'globalReadSettings.customHighlightColors',
   'globalReadSettings.userHighlightColors',

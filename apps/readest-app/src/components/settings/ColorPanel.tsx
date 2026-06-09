@@ -21,10 +21,16 @@ import { SettingsPanelPanelProp } from './SettingsDialog';
 import { useFileSelector } from '@/hooks/useFileSelector';
 import { PREDEFINED_TEXTURES } from '@/styles/textures';
 import { useAtmosphereStore } from '@/store/atmosphereStore';
-import { DefaultHighlightColor, HighlightColor, UserHighlightColor } from '@/types/book';
+import {
+  DefaultHighlightColor,
+  HighlightColor,
+  TypographyEnhancementConfig,
+  UserHighlightColor,
+} from '@/types/book';
 import clsx from 'clsx';
 import { SettingLabel } from './primitives';
-import { HIGHLIGHT_COLOR_HEX } from '@/services/constants';
+import { DEFAULT_TYPOGRAPHY_ENHANCEMENT, HIGHLIGHT_COLOR_HEX } from '@/services/constants';
+import { normalizeTypographyEnhancement } from '@/utils/typographyEnhancement';
 import ThemeEditor from './color/ThemeEditor';
 import ThemeModeSelector from './color/ThemeModeSelector';
 import ThemeColorSelector from './color/ThemeColorSelector';
@@ -32,6 +38,7 @@ import BackgroundTextureSelector from './color/BackgroundTextureSelector';
 import HighlightColorsEditor from './color/HighlightColorsEditor';
 import CodeHighlightingSettings from './color/CodeHighlightingSettings';
 import ReadingRulerSettings from './color/ReadingRulerSettings';
+import TypographyEnhancementSettings from './color/TypographyEnhancementSettings';
 
 const ColorPanel: React.FC<SettingsPanelPanelProp> = ({ bookKey, onRegisterReset }) => {
   const _ = useTranslation();
@@ -55,6 +62,11 @@ const ColorPanel: React.FC<SettingsPanelPanelProp> = ({ bookKey, onRegisterReset
   const [backgroundOpacity, setBackgroundOpacity] = useState(viewSettings.backgroundOpacity);
   const [backgroundSize, setBackgroundSize] = useState(viewSettings.backgroundSize);
   const [highlightOpacity, setHighlightOpacity] = useState(viewSettings.highlightOpacity ?? 0.3);
+  const viewTypographyEnhancement = normalizeTypographyEnhancement(
+    viewSettings.typographyEnhancement,
+  );
+  const [typographyEnhancement, setTypographyEnhancement] =
+    useState<TypographyEnhancementConfig>(viewTypographyEnhancement);
   const [customHighlightColors, setCustomHighlightColors] = useState(
     settings.globalReadSettings.customHighlightColors,
   );
@@ -102,6 +114,7 @@ const ColorPanel: React.FC<SettingsPanelPanelProp> = ({ bookKey, onRegisterReset
     setCustomHighlightColors(HIGHLIGHT_COLOR_HEX);
     setUserHighlightColors([]);
     setDefaultHighlightLabels({});
+    setTypographyEnhancement(DEFAULT_TYPOGRAPHY_ENHANCEMENT);
     deactivateAtmosphere();
   };
 
@@ -141,6 +154,14 @@ const ColorPanel: React.FC<SettingsPanelPanelProp> = ({ bookKey, onRegisterReset
     saveViewSettings(envConfig, bookKey, 'highlightOpacity', highlightOpacity);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [highlightOpacity]);
+
+  useEffect(() => {
+    if (JSON.stringify(typographyEnhancement) === JSON.stringify(viewTypographyEnhancement)) {
+      return;
+    }
+    saveViewSettings(envConfig, bookKey, 'typographyEnhancement', typographyEnhancement);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [typographyEnhancement]);
 
   useEffect(() => {
     let update = false;
@@ -386,6 +407,12 @@ const ColorPanel: React.FC<SettingsPanelPanelProp> = ({ bookKey, onRegisterReset
             onDefaultHighlightLabelsChange={handleDefaultHighlightLabelsChange}
             onOpacityChange={setHighlightOpacity}
             data-setting-id='settings.color.highlightColors'
+          />
+
+          <TypographyEnhancementSettings
+            typographyEnhancement={typographyEnhancement}
+            onChange={setTypographyEnhancement}
+            data-setting-id='settings.color.typographyEnhancement'
           />
 
           <ReadingRulerSettings

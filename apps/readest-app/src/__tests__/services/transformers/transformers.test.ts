@@ -770,6 +770,158 @@ describe('simpleccTransformer', () => {
 });
 
 // =============================================================================
+// typographyEnhancementTransformer
+// =============================================================================
+
+describe('typographyEnhancementTransformer', () => {
+  let typographyEnhancementTransformer: typeof import('@/services/transformers/typographyEnhancement').typographyEnhancementTransformer;
+
+  const makeSettings = (overrides: Partial<ViewSettings['typographyEnhancement']>) =>
+    ({
+      typographyEnhancement: {
+        bookTitle: { enabled: false, color: '#f97316' },
+        information: { enabled: false, color: '#22c55e' },
+        dialogue: { enabled: false, color: '#38bdf8' },
+        ...overrides,
+      },
+    }) as ViewSettings;
+
+  const getSpans = (html: string) => {
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    return Array.from(doc.querySelectorAll('.readest-typography-highlight'));
+  };
+
+  beforeEach(async () => {
+    ({ typographyEnhancementTransformer } = await import(
+      '@/services/transformers/typographyEnhancement'
+    ));
+  });
+
+  test('has the correct name', () => {
+    expect(typographyEnhancementTransformer.name).toBe('typographyEnhancement');
+  });
+
+  test('highlights only the text inside book title marks', async () => {
+    const html = '<html><body><p>读《红楼梦》和「呐喊」。</p></body></html>';
+    const result = await typographyEnhancementTransformer.transform(
+      makeCtx({
+        content: html,
+        viewSettings: makeSettings({
+          bookTitle: { enabled: true, color: '#ff0000' },
+        }),
+      }),
+    );
+    const spans = getSpans(result);
+    expect(spans.map((span) => span.textContent)).toEqual(['红楼梦', '呐喊']);
+    expect(
+      spans.every((span) => span.getAttribute('data-typography-enhancement') === 'bookTitle'),
+    ).toBe(true);
+    expect(spans.every((span) => span.hasAttribute('cfi-skip'))).toBe(true);
+    expect(new DOMParser().parseFromString(result, 'text/html').body.textContent).toBe(
+      '读《红楼梦》和「呐喊」。',
+    );
+  });
+
+  test('supports straight and curly quotes for information and dialogue', async () => {
+    const html = '<html><body><p>这是‘信息’，他说“你好”。另有\'注释\'和"回答"。</p></body></html>';
+    const result = await typographyEnhancementTransformer.transform(
+      makeCtx({
+        content: html,
+        viewSettings: makeSettings({
+          information: { enabled: true, color: '#00ff00' },
+          dialogue: { enabled: true, color: '#0000ff' },
+        }),
+      }),
+    );
+    const spans = getSpans(result);
+    expect(
+      spans.map((span) => [span.getAttribute('data-typography-enhancement'), span.textContent]),
+    ).toEqual([
+      ['information', '信息'],
+      ['dialogue', '你好'],
+      ['information', '注释'],
+      ['dialogue', '回答'],
+    ]);
+  });
+
+  test('prefers the outer dialogue pair when nested dialogue quotes appear', async () => {
+    const html =
+      '<html><body><p>“牧哥的能力我们都知道，就算那“灵路”中都是来自大世界各处的天才妖孽，可牧哥也绝不会逊色，这样被驱逐出来，一定是受到了不公对待！”</p></body></html>';
+    const result = await typographyEnhancementTransformer.transform(
+      makeCtx({
+        content: html,
+        viewSettings: makeSettings({
+          dialogue: { enabled: true, color: '#0000ff' },
+        }),
+      }),
+    );
+    const spans = getSpans(result);
+    expect(
+      spans.map((span) => [span.getAttribute('data-typography-enhancement'), span.textContent]),
+    ).toEqual([
+      [
+        'dialogue',
+        '牧哥的能力我们都知道，就算那“灵路”中都是来自大世界各处的天才妖孽，可牧哥也绝不会逊色，这样被驱逐出来，一定是受到了不公对待！',
+      ],
+    ]);
+  });
+
+  test('supports vertical book title marks', async () => {
+    const html = '<html><body><p>读︽红楼梦︾、︿边城﹀和﹁围城﹂。</p></body></html>';
+    const result = await typographyEnhancementTransformer.transform(
+      makeCtx({
+        content: html,
+        viewSettings: makeSettings({
+          bookTitle: { enabled: true, color: '#ff0000' },
+        }),
+      }),
+    );
+    expect(getSpans(result).map((span) => span.textContent)).toEqual(['红楼梦', '边城', '围城']);
+  });
+
+  test('supports vertical information and dialogue marks by locale', async () => {
+    const html = '<html><body><p>﹁信息﹂﹃对话﹄</p></body></html>';
+    const result = await typographyEnhancementTransformer.transform(
+      makeCtx({
+        content: html,
+        userLocale: 'zh-CN',
+        viewSettings: makeSettings({
+          information: { enabled: true, color: '#00ff00' },
+          dialogue: { enabled: true, color: '#0000ff' },
+        }),
+      }),
+    );
+    expect(
+      getSpans(result).map((span) => [
+        span.getAttribute('data-typography-enhancement'),
+        span.textContent,
+      ]),
+    ).toEqual([
+      ['information', '信息'],
+      ['dialogue', '对话'],
+    ]);
+  });
+
+  test('prioritizes book title marks when vertical symbols overlap', async () => {
+    const html = '<html><body><p>﹁围城﹂</p></body></html>';
+    const result = await typographyEnhancementTransformer.transform(
+      makeCtx({
+        content: html,
+        userLocale: 'zh-CN',
+        viewSettings: makeSettings({
+          bookTitle: { enabled: true, color: '#ff0000' },
+          information: { enabled: true, color: '#00ff00' },
+        }),
+      }),
+    );
+    const spans = getSpans(result);
+    expect(spans).toHaveLength(1);
+    expect(spans[0]!.getAttribute('data-typography-enhancement')).toBe('bookTitle');
+    expect(spans[0]!.textContent).toBe('围城');
+  });
+});
+
+// =============================================================================
 // availableTransformers (index)
 // =============================================================================
 
@@ -785,6 +937,7 @@ describe('availableTransformers', () => {
     expect(names).toContain('language');
     expect(names).toContain('simplecc');
     expect(names).toContain('proofread');
+    expect(names).toContain('typographyEnhancement');
   });
 
   test('each transformer has a name and transform function', async () => {

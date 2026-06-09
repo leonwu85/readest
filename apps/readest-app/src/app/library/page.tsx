@@ -250,7 +250,7 @@ const LibraryPageContent = ({ searchParams }: { searchParams: ReadonlyURLSearchP
   const { pullLibrary, pushLibrary } = useBooksSync();
   const { checkOPDSSubscriptions } = useOPDSSubscriptions();
   useInboxDrainer();
-  const { isDragging } = useDragDropImport();
+  const { isDragging, isCoverImageDragging, coverDropTargetHash } = useDragDropImport();
 
   usePullToRefresh(
     scrollRef,
@@ -1422,7 +1422,7 @@ const LibraryPageContent = ({ searchParams }: { searchParams: ReadonlyURLSearchP
               ref={containerRef}
               className={clsx(
                 'scroll-container drop-zone flex min-h-0 flex-grow flex-col',
-                isDragging && 'drag-over',
+                isDragging && !isCoverImageDragging && 'drag-over',
               )}
               style={{
                 paddingRight: `${insets.right}px`,
@@ -1445,6 +1445,7 @@ const LibraryPageContent = ({ searchParams }: { searchParams: ReadonlyURLSearchP
                 handleLibraryNavigation={handleLibraryNavigation}
                 booksTransferProgress={booksTransferProgress}
                 handlePushLibrary={pushLibrary}
+                coverDropTargetHash={coverDropTargetHash}
               />
             </div>
           </div>

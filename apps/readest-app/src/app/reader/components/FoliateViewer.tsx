@@ -71,6 +71,7 @@ import { handleA11yNavigation } from '@/utils/a11y';
 import { isCJKLang } from '@/utils/lang';
 import { getLocale } from '@/utils/misc';
 import { isFontType } from '@/utils/font';
+import { decorateTypographyEnhancementDoc } from '@/utils/typographyEnhancement';
 import { ParagraphControl } from './paragraph';
 import Spinner from '@/components/Spinner';
 import KOSyncConflictResolver from './KOSyncResolver';
@@ -179,6 +180,7 @@ const FoliateViewer: React.FC<{
               sectionHref: detail.name,
               transformers: [
                 'style',
+                'typographyEnhancement',
                 'punctuation',
                 'footnote',
                 'whitespace',
@@ -267,6 +269,10 @@ const FoliateViewer: React.FC<{
       applyThemeModeClass(detail.doc, isDarkMode);
       applyScrollModeClass(detail.doc, viewSettings.scrolled || false);
       applyScrollbarStyle(document, viewSettings.hideScrollbar || false);
+      decorateTypographyEnhancementDoc(detail.doc, viewSettings, {
+        primaryLanguage: bookData.book?.primaryLanguage,
+        userLocale: getLocale(),
+      });
       keepTextAlignment(detail.doc);
       handleA11yNavigation(viewRef.current, detail.doc, {
         skipToLastPosCallback: skipToReadingPosition,
@@ -695,6 +701,10 @@ const FoliateViewer: React.FC<{
         applyThemeModeClass(doc, isDarkMode);
         applyScrollModeClass(doc, viewSettings.scrolled || false);
         applyScrollbarStyle(document, viewSettings.hideScrollbar || false);
+        decorateTypographyEnhancementDoc(doc, viewSettings, {
+          primaryLanguage: bookData?.book?.primaryLanguage,
+          userLocale: getLocale(),
+        });
       });
 
       if (bookData?.book?.format === 'PDF' && themeCode && renderer) {
@@ -715,6 +725,7 @@ const FoliateViewer: React.FC<{
     viewSettings?.invertImgColorInDark,
     viewSettings?.applyThemeToPDF,
     viewSettings?.hideScrollbar,
+    viewSettings?.typographyEnhancement,
   ]);
 
   useEffect(() => {

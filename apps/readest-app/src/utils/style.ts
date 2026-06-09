@@ -17,6 +17,10 @@ import {
 import { createFontCSS, CustomFont } from '@/styles/fonts';
 import { getOSPlatform } from './misc';
 import { SCROLL_WRAPPER_CLASS, SCROLL_WRAPPER_FIT_CLASS } from './scrollable';
+import {
+  normalizeTypographyEnhancement,
+  TYPOGRAPHY_HIGHLIGHT_CLASS,
+} from './typographyEnhancement';
 
 const getFontStyles = (
   serif: string,
@@ -680,6 +684,39 @@ const getTranslationStyles = (showSource: boolean) => `
   }
 `;
 
+const getTypographyEnhancementStyles = (viewSettings: ViewSettings) => {
+  const typographyEnhancement = normalizeTypographyEnhancement(viewSettings.typographyEnhancement);
+
+  return `
+    html {
+      --readest-typography-book-title-color: ${
+        typographyEnhancement.bookTitle.enabled ? typographyEnhancement.bookTitle.color : 'inherit'
+      };
+      --readest-typography-information-color: ${
+        typographyEnhancement.information.enabled
+          ? typographyEnhancement.information.color
+          : 'inherit'
+      };
+      --readest-typography-dialogue-color: ${
+        typographyEnhancement.dialogue.enabled ? typographyEnhancement.dialogue.color : 'inherit'
+      };
+    }
+    .${TYPOGRAPHY_HIGHLIGHT_CLASS} {
+      color: inherit;
+      text-decoration-color: currentColor;
+    }
+    .${TYPOGRAPHY_HIGHLIGHT_CLASS}[data-typography-enhancement="bookTitle"] {
+      color: var(--readest-typography-book-title-color) !important;
+    }
+    .${TYPOGRAPHY_HIGHLIGHT_CLASS}[data-typography-enhancement="information"] {
+      color: var(--readest-typography-information-color) !important;
+    }
+    .${TYPOGRAPHY_HIGHLIGHT_CLASS}[data-typography-enhancement="dialogue"] {
+      color: var(--readest-typography-dialogue-color) !important;
+    }
+  `;
+};
+
 const getWarichuStyles = () => `
   /* Warichu (割注/夹注) — double-line inline annotation */
   .warichu-pending {
@@ -824,11 +861,12 @@ export const getStyles = (
     viewSettings.backgroundTextureId,
     viewSettings.isEink,
   );
+  const typographyEnhancementStyles = getTypographyEnhancementStyles(viewSettings);
   const translationStyles = getTranslationStyles(viewSettings.showTranslateSource!);
   const warichuStyles = getWarichuStyles();
   const rubyStyles = getRubyStyles();
   const userStylesheet = viewSettings.userStylesheet!;
-  return `${customFontFaces}\n${pageLayoutStyles}\n${paragraphLayoutStyles}\n${fontStyles}\n${colorStyles}\n${translationStyles}\n${warichuStyles}\n${rubyStyles}\n${userStylesheet}`;
+  return `${customFontFaces}\n${pageLayoutStyles}\n${paragraphLayoutStyles}\n${fontStyles}\n${colorStyles}\n${typographyEnhancementStyles}\n${translationStyles}\n${warichuStyles}\n${rubyStyles}\n${userStylesheet}`;
 };
 
 // Build a CSS chunk of `@font-face` rules for the given user custom

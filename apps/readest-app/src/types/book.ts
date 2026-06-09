@@ -28,6 +28,15 @@ export interface UserHighlightColor {
   label?: string;
 }
 export type ReadingRulerColor = 'transparent' | 'yellow' | 'green' | 'blue' | 'rose';
+export type TypographyEnhancementKey = 'bookTitle' | 'information' | 'dialogue';
+export interface TypographyEnhancementItem {
+  enabled: boolean;
+  color: string;
+}
+export type TypographyEnhancementConfig = Record<
+  TypographyEnhancementKey,
+  TypographyEnhancementItem
+>;
 
 export interface ParagraphModeConfig {
   enabled: boolean;
@@ -210,6 +219,7 @@ export interface BookStyle {
   highlightOpacity: number;
   codeHighlighting: boolean;
   codeLanguage: string;
+  typographyEnhancement: TypographyEnhancementConfig;
   userStylesheet: string;
   userUIStylesheet: string;
 

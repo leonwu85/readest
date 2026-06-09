@@ -30,6 +30,7 @@ interface BookItemProps {
   handleBookUpload: (book: Book) => void;
   handleBookDownload: (book: Book, options?: { redownload?: boolean; queued?: boolean }) => void;
   showBookDetailsModal: (book: Book) => void;
+  isCoverDropTarget?: boolean;
 }
 
 const BookItem: React.FC<BookItemProps> = ({
@@ -42,6 +43,7 @@ const BookItem: React.FC<BookItemProps> = ({
   handleBookUpload,
   handleBookDownload,
   showBookDetailsModal,
+  isCoverDropTarget = false,
 }) => {
   const _ = useTranslation();
   const router = useRouter();
@@ -95,6 +97,9 @@ const BookItem: React.FC<BookItemProps> = ({
           imageClassName='rounded shadow-md'
           onAspectRatioChange={setCoverAspect}
         />
+        {isCoverDropTarget && (
+          <div className='bg-primary/20 ring-primary pointer-events-none absolute inset-0 z-10 rounded ring-2 ring-inset' />
+        )}
         {bookSelected && (
           <div className='absolute inset-0 bg-black opacity-30 transition-opacity duration-300'></div>
         )}

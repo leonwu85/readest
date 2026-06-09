@@ -385,6 +385,12 @@ const colorPanelItems = [
     section: 'TTS',
   },
   {
+    id: 'settings.color.typographyEnhancement',
+    labelKey: _('Typography Enhancement'),
+    keywords: ['typography', 'book title', 'quote', 'dialogue', 'highlight', 'color'],
+    section: 'Highlight',
+  },
+  {
     id: 'settings.color.readingRuler',
     labelKey: _('Reading Ruler'),
     keywords: ['reading', 'ruler', 'line', 'guide', 'focus'],

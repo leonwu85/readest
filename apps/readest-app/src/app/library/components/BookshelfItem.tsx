@@ -105,6 +105,7 @@ interface BookshelfItemProps {
   handleShowDetailsBook: (book: Book) => void;
   handleLibraryNavigation: (targetGroup: string) => void;
   handleUpdateReadingStatus: (book: Book, status: ReadingStatus | undefined) => void;
+  isCoverDropTarget?: boolean;
 }
 
 const BookshelfItem: React.FC<BookshelfItemProps> = ({
@@ -123,6 +124,7 @@ const BookshelfItem: React.FC<BookshelfItemProps> = ({
   handleShowDetailsBook,
   handleLibraryNavigation,
   handleUpdateReadingStatus,
+  isCoverDropTarget = false,
 }) => {
   const _ = useTranslation();
   const router = useAppRouter();
@@ -430,6 +432,8 @@ const BookshelfItem: React.FC<BookshelfItemProps> = ({
           mode === 'grid' &&
             'sm:hover:bg-base-300/50 flex h-full flex-col px-0 py-2 sm:rounded-md sm:px-4 sm:py-4',
           mode === 'list' && 'border-base-300 flex flex-col border-b py-2',
+          isCoverDropTarget &&
+            'bg-primary/10 ring-primary/80 ring-2 ring-inset sm:ring-offset-2 sm:ring-offset-base-100',
           appService?.isMobileApp && 'no-context-menu',
           pressing && mode === 'grid' ? 'not-eink:scale-95' : 'scale-100',
         )}
@@ -455,6 +459,7 @@ const BookshelfItem: React.FC<BookshelfItemProps> = ({
               handleBookUpload={handleBookUpload}
               handleBookDownload={handleBookDownload}
               showBookDetailsModal={showBookDetailsModal}
+              isCoverDropTarget={isCoverDropTarget}
             />
           ) : (
             <GroupItem

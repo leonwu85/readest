@@ -12,6 +12,7 @@ import {
   ScreenConfig,
   TranslatorConfig,
   TTSConfig,
+  TypographyEnhancementConfig,
   ViewConfig,
   ViewSettings,
   ViewSettingsConfig,
@@ -186,6 +187,12 @@ export const READING_RULER_COLORS: Record<ReadingRulerColor, string> = {
   rose: '#fb7185',
 };
 
+export const DEFAULT_TYPOGRAPHY_ENHANCEMENT: TypographyEnhancementConfig = {
+  bookTitle: { enabled: false, color: '#f97316' },
+  information: { enabled: false, color: '#22c55e' },
+  dialogue: { enabled: false, color: '#38bdf8' },
+};
+
 export const DEFAULT_READSETTINGS: ReadSettings = {
   sideBarWidth: '15%',
   isSideBarPinned: true,
@@ -275,6 +282,7 @@ export const DEFAULT_BOOK_STYLE: BookStyle = {
   highlightOpacity: 0.4,
   codeHighlighting: false,
   codeLanguage: 'auto-detect',
+  typographyEnhancement: DEFAULT_TYPOGRAPHY_ENHANCEMENT,
   userStylesheet: '',
   userUIStylesheet: '',
 

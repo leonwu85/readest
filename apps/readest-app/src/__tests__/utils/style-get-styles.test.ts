@@ -727,6 +727,44 @@ describe('getTranslationStyles branches (via getStyles)', () => {
 });
 
 // ---------------------------------------------------------------------------
+// getTypographyEnhancementStyles branches
+// ---------------------------------------------------------------------------
+describe('getTypographyEnhancementStyles branches (via getStyles)', () => {
+  const theme = makeThemeCode();
+
+  it('emits separate colors for enabled typography enhancement types', () => {
+    const vs = makeViewSettings({
+      typographyEnhancement: {
+        bookTitle: { enabled: true, color: '#aa0000' },
+        information: { enabled: true, color: '#00aa00' },
+        dialogue: { enabled: true, color: '#0000aa' },
+      },
+    });
+    const css = getStyles(vs, theme);
+    expect(css).toContain('--readest-typography-book-title-color: #aa0000');
+    expect(css).toContain('--readest-typography-information-color: #00aa00');
+    expect(css).toContain('--readest-typography-dialogue-color: #0000aa');
+    expect(css).toContain('[data-typography-enhancement="bookTitle"]');
+    expect(css).toContain('[data-typography-enhancement="information"]');
+    expect(css).toContain('[data-typography-enhancement="dialogue"]');
+  });
+
+  it('uses inherit for disabled typography enhancement types', () => {
+    const vs = makeViewSettings({
+      typographyEnhancement: {
+        bookTitle: { enabled: false, color: '#aa0000' },
+        information: { enabled: false, color: '#00aa00' },
+        dialogue: { enabled: false, color: '#0000aa' },
+      },
+    });
+    const css = getStyles(vs, theme);
+    expect(css).toContain('--readest-typography-book-title-color: inherit');
+    expect(css).toContain('--readest-typography-information-color: inherit');
+    expect(css).toContain('--readest-typography-dialogue-color: inherit');
+  });
+});
+
+// ---------------------------------------------------------------------------
 // getStyles integration: userStylesheet appended
 // ---------------------------------------------------------------------------
 describe('getStyles integration', () => {

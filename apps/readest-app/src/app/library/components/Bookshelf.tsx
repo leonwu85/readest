@@ -78,7 +78,14 @@ interface BookshelfProps {
   handleLibraryNavigation: (targetGroup: string) => void;
   handlePushLibrary: () => Promise<void>;
   booksTransferProgress: { [key: string]: number | null };
+  coverDropTargetHash?: string | null;
 }
+
+type CoverDropPayload = {
+  bookHash?: string;
+  file?: File;
+  path?: string;
+};
 
 /**
  * Context passed to the custom Virtuoso `List` components so they can render
@@ -150,6 +157,7 @@ const Bookshelf: React.FC<BookshelfProps> = ({
   handleLibraryNavigation,
   handlePushLibrary,
   booksTransferProgress,
+  coverDropTargetHash,
 }) => {
   const _ = useTranslation();
   const router = useRouter();
@@ -563,12 +571,82 @@ const Bookshelf: React.FC<BookshelfProps> = ({
     [envConfig, updateBooks],
   );
 
-  const handleDeleteBooksIntent = (event: CustomEvent) => {
+  const handleUpdateBookCoverFromDrop = useCallback(
+    async (event: CustomEvent) => {
+      if (!appService) return;
+      const { bookHash, file, path } = (event.detail || {}) as CoverDropPayload;
+      if (!bookHash || (!file && !path)) return;
+
+      const book = useLibraryStore.getState().getBookByHash(bookHash);
+      if (!book || book.deletedAt) return;
+
+      let previewCoverUrl: string | undefined;
+      const now = Date.now();
+      setLoading(true);
+      try {
+        if (file) {
+          previewCoverUrl = URL.createObjectURL(file);
+        }
+
+        await appService.updateCoverImage(book, previewCoverUrl, path);
+
+        if (!previewCoverUrl && path) {
+          try {
+            previewCoverUrl = await appService.getCachedImageUrl(path);
+          } catch (error) {
+            console.warn('Failed to create dropped cover preview:', error);
+          }
+        }
+
+        if (!previewCoverUrl) {
+          const generatedCoverUrl = await appService.generateCoverImageUrl(book);
+          previewCoverUrl = `${generatedCoverUrl}${generatedCoverUrl.includes('?') ? '&' : '?'}t=${now}`;
+        }
+
+        const metadata = book.metadata ? { ...book.metadata } : undefined;
+        if (metadata) {
+          delete metadata.coverImageUrl;
+          delete metadata.coverImageBlobUrl;
+          delete metadata.coverImageFile;
+        }
+
+        await updateBooks(envConfig, [
+          {
+            ...book,
+            metadata,
+            coverImageUrl: previewCoverUrl,
+            coverDownloadedAt: now,
+            updatedAt: now,
+          },
+        ]);
+
+        eventDispatcher.dispatch('toast', {
+          type: 'success',
+          timeout: 2000,
+          message: _('Cover updated: {{title}}', { title: book.title }),
+        });
+      } catch (error) {
+        if (previewCoverUrl?.startsWith('blob:')) {
+          URL.revokeObjectURL(previewCoverUrl);
+        }
+        console.error('Failed to update dropped cover image:', error);
+        eventDispatcher.dispatch('toast', {
+          type: 'error',
+          message: _('Failed to update cover: {{title}}', { title: book.title }),
+        });
+      } finally {
+        setLoading(false);
+      }
+    },
+    [appService, envConfig, updateBooks, _],
+  );
+
+  const handleDeleteBooksIntent = useCallback((event: CustomEvent) => {
     const { ids } = event.detail;
     setBookIdsToDelete(ids);
     setShowSelectModeActions(false);
     setShowDeleteAlert(true);
-  };
+  }, []);
 
   useEffect(() => {
     if (isSelectMode) {
@@ -589,10 +667,12 @@ const Bookshelf: React.FC<BookshelfProps> = ({
 
   useEffect(() => {
     eventDispatcher.on('delete-books', handleDeleteBooksIntent);
+    eventDispatcher.on('update-book-cover-from-drop', handleUpdateBookCoverFromDrop);
     return () => {
       eventDispatcher.off('delete-books', handleDeleteBooksIntent);
+      eventDispatcher.off('update-book-cover-from-drop', handleUpdateBookCoverFromDrop);
     };
-  }, []);
+  }, [handleDeleteBooksIntent, handleUpdateBookCoverFromDrop]);
 
   const { user } = useAuth();
   const [shareDialogBook, setShareDialogBook] = useState<Book | null>(null);
@@ -718,6 +798,7 @@ const Bookshelf: React.FC<BookshelfProps> = ({
           handleShowDetailsBook={handleShowDetailsBook}
           handleLibraryNavigation={handleLibraryNavigation}
           handleUpdateReadingStatus={handleUpdateReadingStatus}
+          isCoverDropTarget={'hash' in item && item.hash === coverDropTargetHash}
           transferProgress={
             'hash' in item ? booksTransferProgress[(item as Book).hash] || null : null
           }
@@ -743,6 +824,7 @@ const Bookshelf: React.FC<BookshelfProps> = ({
       handleShowDetailsBook,
       handleLibraryNavigation,
       handleUpdateReadingStatus,
+      coverDropTargetHash,
     ],
   );
 
